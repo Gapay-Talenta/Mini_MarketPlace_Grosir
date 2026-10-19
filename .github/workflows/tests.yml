@@ -1,0 +1,75 @@
+name: tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+
+    services:
+      mariadb:
+        image: mariadb:11.4
+        env:
+          MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: 'yes'
+          MARIADB_DATABASE: project_sem3
+        ports:
+          - 3306:3306
+        options: --health-cmd="mariadb-admin ping -h 127.0.0.1 --silent" --health-interval=5s --health-timeout=2s --health-retries=5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: --health-cmd="redis-cli ping" --health-interval=5s --health-timeout=2s --health-retries=5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.4'
+          extensions: mbstring, pdo_mysql, redis, bcmath
+          tools: composer:v2
+          coverage: none
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Create Test Database
+        run: |
+          mariadb -h 127.0.0.1 -u root -e "CREATE DATABASE IF NOT EXISTS project_sem3_test;"
+
+      - name: Setup Application
+        run: composer setup
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: project_sem3
+          DB_USERNAME: root
+          DB_PASSWORD: ''
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379
+
+      - name: Run CI Checks
+        run: composer ci:check
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_DATABASE: project_sem3_test
+          DB_USERNAME: root
+          DB_PASSWORD: ''
+          REDIS_HOST: 127.0.0.1
+          REDIS_PORT: 6379

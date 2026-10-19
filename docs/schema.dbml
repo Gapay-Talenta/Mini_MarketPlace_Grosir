@@ -1,0 +1,452 @@
+// ============================================================
+// Hub Toko Grosir — schema inti MVP (DBML untuk dbdiagram.io)
+// Sumber: draft_rincian_project_laravel.md §6 (LOCKED)
+// Konvensi: uang = BIGINT (integer Rupiah), waktu = UTC,
+// tenant-owned tabel punya store_id + composite FK agar relasi
+// anak tidak bisa menunjuk resource toko lain.
+// Import: https://dbdiagram.io → New Diagram → paste file ini.
+// ============================================================
+
+Project hub_toko_grosir {
+  database_type: 'MariaDB'
+  Note: 'ERD grosir pengganti ERD_Kantin_Multi_Tenant. Tanpa meja/QR/modifier. Pembeli = user login (tanpa sesi anonim/tracking token); notifikasi WhatsApp via Fonnte + Web Push.'
+}
+
+// ===== Autentikasi (dari starter kit Laravel) =====
+Table users {
+  id bigint [pk, increment]
+  name varchar(120) [not null]
+  email varchar(190) [unique, not null]
+  password varchar(255) [not null]
+  phone varchar(20) [not null, note: 'wajib saat registrasi, tanpa OTP; target notifikasi WhatsApp order (Fonnte)']
+  role varchar(20) [not null, default: 'customer', note: 'customer | admin_hub; admin toko ditandai lewat membership store_admins']
+  created_at timestamp
+  updated_at timestamp
+  Note: 'Dipakai admin hub, admin toko, DAN pembeli. Login wajib untuk belanja (cart/checkout/order/refund). Katalog publik tetap bisa dibaca tanpa login.'
+}
+
+// ===== Toko & admin =====
+Table stores {
+  id bigint [pk, increment]
+  slug varchar(80) [unique, not null]
+  name varchar(120) [not null]
+  description text
+  status varchar(20) [not null, default: 'aktif', note: 'aktif | nonaktif']
+  created_at timestamp
+  updated_at timestamp
+}
+
+Table store_admins {
+  id bigint [pk, increment]
+  store_id bigint [not null]
+  user_id bigint [not null]
+  role varchar(20) [not null, note: 'owner | admin | operator']
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (store_id, user_id) [unique]
+  }
+}
+Ref: store_admins.store_id > stores.id
+Ref: store_admins.user_id > users.id
+
+Table commission_rates {
+  id bigint [pk, increment]
+  store_id bigint [not null]
+  rate_percent decimal(5,2) [not null]
+  valid_from timestamp [not null]
+  valid_to timestamp [null, note: 'NULL = masih berlaku; anti-overlap dicek di service (MariaDB tak punya exclusion constraint)']
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (store_id, valid_from)
+  }
+}
+Ref: commission_rates.store_id > stores.id
+
+Table store_shipping_rates {
+  id bigint [pk, increment]
+  store_id bigint [unique, not null, note: 'satu tarif aktif per toko']
+  rate_per_kg bigint [not null, note: 'Rupiah per kg, dibulatkan ke atas, minimum 1 kg']
+  created_at timestamp
+  updated_at timestamp
+}
+Ref: store_shipping_rates.store_id > stores.id
+
+Table store_bank_accounts {
+  id bigint [pk, increment]
+  store_id bigint [not null]
+  bank_name varchar(60) [not null]
+  account_number_encrypted text [not null, note: 'terenkripsi; UI hanya menampilkan last4']
+  account_last4 char(4) [not null]
+  account_holder_name varchar(120) [not null]
+  status varchar(20) [not null, default: 'pending', note: 'pending | verified | rejected']
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (store_id, id) [unique, note: 'target composite FK withdrawal']
+  }
+}
+Ref: store_bank_accounts.store_id > stores.id
+
+// ===== Katalog =====
+Table products {
+  id bigint [pk, increment]
+  store_id bigint [not null]
+  name varchar(150) [not null]
+  category varchar(20) [not null, note: 'daftar tetap global: bahan_pangan | minuman | alat_tulis | kebersihan | rumah_tangga | lainnya (validasi PHP enum)']
+  sales_unit varchar(20) [not null, note: 'daftar tetap global: pcs | kardus | karung | pack | rim | kg | liter (validasi PHP enum); qty/min_qty/harga mengacu satuan ini']
+  description text [null]
+  photo_path varchar(255) [null, note: '1 foto per produk; disk public; jpg/png/webp maks 2MB']
+  weight_gram int [not null, note: 'gram per satu satuan jual (mis. 1 kardus = 12.000 g); dasar hitung ongkir per berat']
+  stock int [not null, default: 0, note: 'stok dalam satuan jual']
+  status varchar(20) [not null, default: 'aktif', note: 'aktif | arsip | habis']
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (store_id, id) [unique, note: 'target composite FK anak']
+    (store_id, status)
+    (category, status) [note: 'filter kategori katalog publik']
+  }
+}
+Ref: products.store_id > stores.id
+
+Table product_prices {
+  id bigint [pk, increment]
+  store_id bigint [not null]
+  product_id bigint [not null]
+  price_type varchar(10) [not null, note: 'normal | grosir']
+  amount bigint [not null, note: 'harga satuan']
+  min_qty int [null, note: 'wajib untuk grosir; NULL untuk normal; unik & menaik per produk; maks 4 tier grosir (dicek di service)']
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (store_id, product_id, price_type, min_qty) [unique, note: '1 harga normal (min_qty NULL) + maks 4 tier grosir per produk']
+  }
+}
+Ref: product_prices.(store_id, product_id) > products.(store_id, id)
+
+Table stock_movements {
+  id bigint [pk, increment]
+  store_id bigint [not null]
+  product_id bigint [not null]
+  qty_delta int [not null, note: 'minus = keluar (checkout), plus = masuk (release/adjustment)']
+  movement_type varchar(20) [not null, note: 'checkout | release_expired | release_cancel | adjustment']
+  reference_type varchar(60) [not null]
+  reference_id bigint [not null]
+  created_at timestamp
+
+  indexes {
+    (store_id, product_id)
+    (reference_type, reference_id)
+  }
+  Note: 'Append-only audit movement stok.'
+}
+Ref: stock_movements.(store_id, product_id) > products.(store_id, id)
+
+// ===== Order =====
+Table orders {
+  id bigint [pk, increment]
+  user_id bigint [not null, note: 'pemilik order; login wajib; tanpa sesi anonim/tracking token']
+  status varchar(20) [not null, default: 'pending_payment', note: 'pending_payment | paid | expired | cancelled | completed']
+  subtotal bigint [not null]
+  shipping_total bigint [not null, note: 'jumlah ongkir semua sub-order']
+  grand_total bigint [not null]
+  checkout_idempotency_key varchar(80) [unique, not null]
+  cancelled_at timestamp [null]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (status, created_at)
+    (user_id, created_at)
+  }
+}
+Ref: orders.user_id > users.id
+
+Table shipping_addresses {
+  id bigint [pk, increment]
+  order_id bigint [unique, not null, note: 'satu alamat per order induk']
+  receiver_name varchar(120) [not null]
+  phone varchar(20) [not null]
+  address_line text [not null]
+  city varchar(80) [not null]
+  postal_code varchar(10) [not null]
+  notes text [null]
+  created_at timestamp
+}
+Ref: shipping_addresses.order_id > orders.id
+
+Table sub_orders {
+  id bigint [pk, increment]
+  order_id bigint [not null]
+  store_id bigint [not null]
+  status varchar(20) [not null, default: 'pending_payment', note: 'pending_payment | paid | processing | shipped | completed | refund_requested | refunded | expired | cancelled']
+  subtotal bigint [not null]
+  shipping_fee bigint [not null, note: 'ongkir sub-order: total_weight_gram dibulatkan ke atas kg × rate_per_kg snapshot']
+  total_weight_gram int [not null, note: 'snapshot berat item']
+  rate_per_kg bigint [not null, note: 'snapshot tarif toko saat checkout']
+  commission_rate_percent decimal(5,2) [not null, note: 'snapshot tarif komisi saat checkout']
+  commission_amount bigint [not null, note: 'dari subtotal saja, ongkir tidak kena komisi']
+  total bigint [not null, note: 'subtotal + shipping_fee']
+  shipped_at timestamp [null]
+  estimate_days int [null, note: 'estimasi pengiriman hari']
+  completed_at timestamp [null]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (store_id, id) [unique, note: 'target composite FK refund/order_items']
+    (order_id)
+    (store_id, status)
+  }
+  Note: 'Order induk completed saat semua sub_order completed/refunded.'
+}
+Ref: sub_orders.order_id > orders.id
+Ref: sub_orders.store_id > stores.id
+
+Table order_items {
+  id bigint [pk, increment]
+  store_id bigint [not null]
+  sub_order_id bigint [not null]
+  product_id bigint [not null]
+  product_name varchar(150) [not null, note: 'snapshot']
+  price_amount bigint [not null, note: 'snapshot harga final terpakai']
+  price_type varchar(10) [not null, note: 'snapshot: normal | grosir']
+  min_qty int [null, note: 'snapshot minimal qty grosir yang terpakai']
+  qty int [not null, note: 'dalam satuan jual produk saat checkout']
+  sales_unit varchar(20) [not null, note: 'snapshot satuan jual (pcs/kardus/...)']
+  weight_gram int [not null, note: 'snapshot gram per satuan jual']
+  line_total bigint [not null]
+  created_at timestamp
+
+  indexes {
+    (store_id, sub_order_id)
+  }
+}
+Ref: order_items.(store_id, sub_order_id) > sub_orders.(store_id, id)
+Ref: order_items.(store_id, product_id) > products.(store_id, id)
+
+// ===== Payment =====
+Table payments {
+  id bigint [pk, increment]
+  order_id bigint [unique, not null, note: 'satu pembayaran gabungan per order induk']
+  provider varchar(20) [not null, default: 'midtrans', note: 'satu provider saja']
+  amount bigint [not null, note: '= grand_total order']
+  status varchar(20) [not null, default: 'pending', note: 'pending | settled | expired | failed']
+  settled_at timestamp [null]
+  created_at timestamp
+  updated_at timestamp
+}
+Ref: payments.order_id > orders.id
+
+Table payment_attempts {
+  id bigint [pk, increment]
+  payment_id bigint [not null]
+  attempt_no int [not null, note: 'regenerasi QR maks 3 per payment']
+  provider_reference varchar(80) [unique, not null]
+  qr_payload text [not null]
+  status varchar(20) [not null, default: 'active', note: 'active | settled | expired | cancelled; hanya satu attempt boleh settled per payment']
+  expires_at timestamp [not null]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (payment_id, attempt_no) [unique]
+  }
+}
+Ref: payment_attempts.payment_id > payments.id
+
+Table payment_events {
+  id bigint [pk, increment]
+  payment_id bigint [not null]
+  provider_event_id varchar(80) [unique, not null, note: 'dedup webhook; event provider sama diputar ulang tidak diproses dobel']
+  event_type varchar(40) [not null, note: 'misal payment.settled | payment.expired']
+  payload json [not null, note: 'payload provider, append-only']
+  status varchar(20) [not null, default: 'processed', note: 'processed | duplicate | failed']
+  created_at timestamp
+
+  indexes {
+    (payment_id, created_at)
+  }
+  Note: 'Append-only log event webhook provider. Idempotency webhook = unique provider_event_id.'
+}
+Ref: payment_events.payment_id > payments.id
+
+// ===== Ledger =====
+Table accounts {
+  code char(4) [pk, note: '1000 | 2000 | 2100 | 2110 | 3000']
+  name varchar(80) [not null]
+  account_type varchar(20) [not null, note: 'aset | liabilitas | pendapatan']
+  Note: 'Seeder 5 akun (chart of accounts LOCKED).'
+}
+
+Table ledger_entries {
+  id bigint [pk, increment]
+  account_code char(4) [not null]
+  store_id bigint [null, note: 'wajib untuk akun per toko (2000/2100/2110); NULL untuk kas/komisi platform']
+  debit bigint [not null, default: 0]
+  credit bigint [not null, default: 0]
+  idempotency_key varchar(80) [unique, not null, note: 'dedup posting; webhook retry tidak dobel']
+  reference_type varchar(60) [not null, note: 'grup keseimbangan + jejak: payment/settlement/refund/withdrawal/payout']
+  reference_id bigint [not null]
+  note varchar(255) [null]
+  created_at timestamp
+
+  indexes {
+    (reference_type, reference_id)
+    (account_code, created_at)
+  }
+  Note: 'Append-only. Koreksi = reversal. Invariant: total debit = total credit per reference.'
+}
+Ref: ledger_entries.account_code > accounts.code
+Ref: ledger_entries.store_id > stores.id
+
+Table balance_projections {
+  id bigint [pk, increment]
+  account_code char(4) [not null]
+  store_id bigint [null]
+  balance bigint [not null, default: 0, note: 'selalu bisa direkonsiliasi ulang dari ledger_entries']
+  updated_at timestamp
+
+  indexes {
+    (account_code, store_id) [unique, note: 'unique ditegakkan di service (COALESCE(store_id,0)); NULL tidak unik native di MariaDB']
+  }
+}
+Ref: balance_projections.account_code > accounts.code
+Ref: balance_projections.store_id > stores.id
+
+// ===== Refund =====
+Table refund_requests {
+  id bigint [pk, increment]
+  store_id bigint [not null]
+  sub_order_id bigint [not null]
+  user_id bigint [not null, note: 'pengaju = pembeli login (pemilik sub-order)']
+  amount bigint [not null, note: '= total sub-order: produk + ongkir (refund penuh per sub-order)']
+  status varchar(20) [not null, default: 'pending', note: 'pending | approved | rejected | refunded | payout_failed']
+  reason text [not null]
+  reject_reason text [null]
+  decided_at timestamp [null]
+  refunded_at timestamp [null]
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (store_id, sub_order_id, status) [note: 'satu pengajuan aktif per sub-order ditegakkan di service']
+    (user_id, created_at) [note: 'rate limit: maks 5 pengajuan per user per jam']
+  }
+  Note: 'Alur approve: Midtrans Refund API sukses → posting reversal ledger → status refunded. API gagal → payout_failed (review admin, tanpa retry otomatis).'
+}
+Ref: refund_requests.(store_id, sub_order_id) > sub_orders.(store_id, id)
+Ref: refund_requests.user_id > users.id
+
+Table refund_proofs {
+  id bigint [pk, increment]
+  refund_request_id bigint [not null]
+  file_path varchar(255) [not null, note: 'disk private; jpg/png/webp, maks 2MB']
+  mime_type varchar(40) [not null]
+  size_bytes int [not null]
+  created_at timestamp
+
+  indexes {
+    (refund_request_id) [note: 'maks 3 file per pengajuan']
+  }
+}
+Ref: refund_proofs.refund_request_id > refund_requests.id
+
+// ===== Withdrawal =====
+Table withdrawals {
+  id bigint [pk, increment]
+  store_id bigint [not null]
+  bank_account_id bigint [not null, note: 'harus status verified']
+  amount bigint [not null]
+  status varchar(20) [not null, default: 'requested', note: 'requested | approved | rejected | disbursed']
+  requested_at timestamp [not null]
+  decided_at timestamp [null]
+  disbursed_at timestamp [null]
+  created_at timestamp
+  updated_at timestamp
+  Note: 'Alur ledger: request → hold 2000→2110; reject → kembali; payout → 2110→1000.'
+}
+Ref: withdrawals.store_id > stores.id
+Ref: withdrawals.(store_id, bank_account_id) > store_bank_accounts.(store_id, id)
+
+// ===== Audit =====
+Table audit_logs {
+  id bigint [pk, increment]
+  user_id bigint [not null, note: 'admin yang melakukan aksi']
+  action varchar(60) [not null, note: 'approve_refund | reject_refund | verify_bank_account | upsert_commission_rate | upsert_shipping_rate | store_status_change | withdraw_decide | payout']
+  subject_type varchar(60) [not null, note: 'polymorphic: class nama model']
+  subject_id bigint [not null]
+  before json [null, note: 'snapshot sebelum (kolom relevan saja)']
+  after json [null, note: 'snapshot sesudah (kolom relevan saja)']
+  note varchar(255) [null, note: 'alasan wajib untuk override/penolakan']
+  created_at timestamp
+
+  indexes {
+    (subject_type, subject_id)
+    (user_id, created_at)
+  }
+  Note: 'Append-only, tanpa update/delete. Jejak tindakan admin: refund, rekening, komisi, status toko, withdrawal.'
+}
+Ref: audit_logs.user_id > users.id
+
+// ===== Realtime outbox =====
+Table outbox_events {
+  id bigint [pk, increment]
+  event_type varchar(80) [not null, note: 'misal order.status.changed']
+  payload json [not null, note: 'payload minimal: id, status, timestamp — bukan model penuh']
+  status varchar(20) [not null, default: 'pending', note: 'pending | published | failed']
+  attempts int [not null, default: 0, note: 'retry terbatas, tanpa retry buta']
+  published_at timestamp [null]
+  created_at timestamp
+
+  indexes {
+    (status, created_at)
+  }
+  Note: 'Ditulis dalam transaksi yang sama dengan perubahan state; publisher job mengirim ke Reverb setelah commit.'
+}
+
+// ===== Web Push (opt-in pembeli login) =====
+Table push_subscriptions {
+  id bigint [pk, increment]
+  user_id bigint [not null, note: 'terikat akun pembeli login']
+  endpoint varchar(500) [not null, note: 'URL push service browser vendor']
+  p256dh varchar(120) [not null, note: 'kunci publik enkripsi dari subscription']
+  auth varchar(60) [not null, note: 'auth secret dari subscription']
+  created_at timestamp
+
+  indexes {
+    (user_id, endpoint) [unique]
+  }
+  Note: 'Dihapus saat user tidak punya order aktif lagi (semua completed/cancelled) — data minimization. Tanpa izin user tidak ada baris.'
+}
+Ref: push_subscriptions.user_id > users.id
+
+// ===== Reporting (ekspor via job queue) =====
+Table report_exports {
+  id bigint [pk, increment]
+  store_id bigint [not null, note: 'tenant-scope; admin hub juga boleh (store_id toko terkait)']
+  requested_by bigint [not null, note: 'user yang minta ekspor']
+  report_type varchar(40) [not null, note: 'sales | ledger | reconciliation']
+  format varchar(10) [not null, note: 'csv | xlsx | pdf']
+  status varchar(20) [not null, default: 'pending', note: 'pending | done | failed']
+  file_path varchar(255) [null, note: 'disk private; null saat pending/failed']
+  error_message varchar(255) [null]
+  expires_at timestamp [not null, note: 'signed URL unduh berlaku 24 jam setelah done']
+  created_at timestamp
+  updated_at timestamp
+
+  indexes {
+    (store_id, created_at)
+    (requested_by, created_at)
+  }
+  Note: 'Job GenerateReportExport iterasi lazyById, simpan ke disk private, unduh via signed URL + authorization.'
+}
+Ref: report_exports.store_id > stores.id
+Ref: report_exports.requested_by > users.id
