@@ -14,33 +14,37 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         // 1. Akun Pembeli / Customer Biasa
-        User::factory()->create([
+        $customer = User::query()->firstOrNew(['email' => 'customer@grosir.test']);
+        $customer->forceFill([
             'name' => 'Pembeli Grosir',
-            'email' => 'customer@grosir.test',
-            'role' => null,
+            'phone' => '081234567890',
+            'role' => 'customer',
             'status' => 'active',
             'password' => Hash::make('password'),
             'email_verified_at' => now(),
-        ]);
+        ])->save();
 
-        // 2. Akun Demo Peran Internal
+        // 2. Akun Demo Peran Internal (Admin Hub & Operator Toko)
         $demoUsers = [
             [
                 'name' => 'Admin Hub Platform',
                 'email' => 'admin@grosir.test',
+                'phone' => '081200000001',
                 'role' => 'admin',
             ],
             [
                 'name' => 'Operator Toko Makmur',
                 'email' => 'tenant@grosir.test',
+                'phone' => '081200000002',
                 'role' => 'tenant',
             ],
         ];
 
         foreach ($demoUsers as $row) {
-            User::firstOrNew(['email' => $row['email']])
+            User::query()->firstOrNew(['email' => $row['email']])
                 ->forceFill([
                     'name' => $row['name'],
+                    'phone' => $row['phone'],
                     'role' => $row['role'],
                     'status' => 'active',
                     'password' => Hash::make('password'),
@@ -48,5 +52,11 @@ class DatabaseSeeder extends Seeder
                 ])
                 ->save();
         }
+
+        // 3. Seeder Akun Finansial (Chart of Accounts)
+        $this->call(AccountSeeder::class);
+
+        // 4. Seeder Demo Toko Grosir, Produk, Tier Harga, dan Proyeksi Saldo
+        $this->call(DemoGrosirSeeder::class);
     }
 }

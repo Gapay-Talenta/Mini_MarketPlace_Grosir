@@ -12,15 +12,15 @@ Dokumen pelacak progres mingguan kumulatif pengembangan aplikasi **Mini MarketPl
 
 ## 1. Ringkasan Eksekutif
 
-| Komponen                        | Status Saat Ini                                                        |
-| ------------------------------- | ---------------------------------------------------------------------- |
-| **Fase**                        | Fase 1 — Fondasi Teknis                                                |
-| **Pertemuan Terakhir Selesai**  | **Pertemuan 01** (Setup Toolchain, Laravel 13, MariaDB, Redis, Reverb) |
-| **Tag Git Terakhir**            | `pertemuan-01`                                                         |
-| **Quality Gate**                | **PASS** (31 test passing, Pint clean, Vite build clean)               |
-| **Database Dev / Test**         | `project_sem3` / `project_sem3_test` (MariaDB 11.4+)                   |
-| **Cache, Queue, Session, Cart** | Redis 7.x (`127.0.0.1:6379`)                                           |
-| **Broadcasting / Realtime**     | Laravel Reverb (`0.0.0.0:8080`)                                        |
+| Komponen                        | Status Saat Ini                                                               |
+| ------------------------------- | ----------------------------------------------------------------------------- |
+| **Fase**                        | Fase 1 — Fondasi Teknis & Data                                                |
+| **Pertemuan Terakhir Selesai**  | **Pertemuan 03** (Implementasi Basis Data, Migrasi 26 Tabel, Model, & Seeder) |
+| **Tag Git Terakhir**            | `pertemuan-02` (siap tag `pertemuan-03`)                                      |
+| **Quality Gate**                | **PASS** (55 test passing, Pint clean, PHPStan clean, Vite clean)             |
+| **Database Dev / Test**         | `project_sem3` / `project_sem3_test` (MariaDB 11.4+)                          |
+| **Cache, Queue, Session, Cart** | Redis 7.x (`127.0.0.1:6379`)                                                  |
+| **Broadcasting / Realtime**     | Laravel Reverb (`0.0.0.0:8080`)                                               |
 
 ---
 
@@ -29,9 +29,9 @@ Dokumen pelacak progres mingguan kumulatif pengembangan aplikasi **Mini MarketPl
 |   Mg   | Topik / Fokus                                               | Target Output Utama                                                                                                                    | Quality Gate / Verifikasi                                             |     Status      |
 | :----: | ----------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | :-------------: |
 | **01** | **Setup toolchain, Laravel 13, Livewire 4, MariaDB, Redis** | Repo bersih, health check, Reverb terpasang & terhubung, DB dev & test terpisah                                                        | `php artisan test` (31 passed), Pint PASS, `npm run build` PASS       | ✅ **SELESAI**  |
-| **02** | Modular monolith, auth 3 konteks, layout                    | Struktur 6 modul, route group `PortalRoutes`, registrasi + login customer (name, email, password, phone), layout customer/tenant/admin | Route list valid, auth gate test, layout render test                  | ⏳ _Berikutnya_ |
-| **03** | Migrasi baseline + tabel ledger                             | Tabel inti (26 tabel) + 5 akun COA + `ledger_entries` + `balance_projections`                                                          | `migrate:fresh` sukses, foreign key integrity                         |   ⬜ Rencana    |
-| **04** | Isolasi multi-tenant                                        | `TenantContext`, `BelongsToTenant` scope, policy tenant, composite FK enforcement                                                      | Matrix allow/deny tenant isolation test                               |   ⬜ Rencana    |
+| **02** | **Modular monolith, auth 3 konteks, layout**                | Struktur 6 modul, route group `PortalRoutes`, registrasi + login customer (name, email, password, phone), layout customer/tenant/admin | Route list valid, auth gate test, layout render test (47 passed)      | ✅ **SELESAI**  |
+| **03** | **Migrasi baseline + tabel ledger**                         | Tabel inti (26 tabel) + 5 akun COA + `ledger_entries` + `balance_projections` + model & seeder                                         | `migrate:fresh --seed` sukses, FK komposit MariaDB (55 passed)        | ✅ **SELESAI**  |
+| **04** | Isolasi multi-tenant                                        | `TenantContext`, `BelongsToTenant` scope, policy tenant, composite FK enforcement                                                      | Matrix allow/deny tenant isolation test                               | ⏳ _Berikutnya_ |
 | **05** | Admin hub + admin toko                                      | CRUD toko, role `store_admins`, komisi effective-dated, rekening toko terenkripsi, tarif ongkir/kg, audit log                          | Commission overlap guard test, encrypted bank test                    |   ⬜ Rencana    |
 | **06** | Katalog publik + katalog toko + tier harga                  | CRUD produk (kategori, satuan, foto, deskripsi, berat), 1 harga normal + maks 4 tier grosir, stok, katalog publik                      | Tier resolver test, withoutGlobalScopes review                        |   ⬜ Rencana    |
 | **07** | Cart multi-toko di Redis (milik user)                       | `CartService` (key terikat `user_id`), revalidasi harga & stok saat buka cart, UI cart Livewire, login gate                            | Cart isolation per user test, stock/price revalidation test           |   ⬜ Rencana    |
@@ -94,4 +94,30 @@ Dokumen pelacak progres mingguan kumulatif pengembangan aplikasi **Mini MarketPl
 | 11  | Resolver tier harga grosir (qty cocok tier, snapshot harga & satuan aman)           |       Mg 6       |   ⬜   |
 | 12  | Web Push subscription lifecycle (bind `user_id`, cleanup saat order tuntas)         |      Mg 12       |   ⬜   |
 | 13  | Notifikasi WhatsApp via Fonnte (target `users.phone`, fail-safe order)              |      Mg 12       |   ⬜   |
-| 14  | Auth gate (guest ditolak add-to-cart/checkout/lihat order; non-admin ditolak panel) |       Mg 2       |   ⬜   |
+| 14  | Auth gate (guest ditolak add-to-cart/checkout/lihat order; non-admin ditolak panel) |       Mg 2       |   ✅   |
+
+---
+
+## 5. Rincian Capaian Pertemuan 03
+
+### A. Skema 26 Tabel Baseline Terintegrasi
+- Berkas migrasi 7 grup (`database/migrations/2026_10_21_000101_*` s/d `*000107_*`).
+- Penegakan integritas data via composite foreign key `(store_id, resource_id)`.
+- Akurasi nominal menggunakan `unsignedBigInteger` (integer Rupiah).
+- Presisi waktu transaksi menggunakan `timestamps(6)` (microsecond precision).
+- Enkripsi native untuk nomor rekening bank toko (`encrypted` cast).
+
+### B. 26 Model Eloquent Lengkap & Type-Safe
+- Seluruh 26 model dibuat di `app/Models/` dengan casting yang presisi dan relasi antar agregat.
+- PHPStan analyse lulus dengan **0 errors**.
+
+### C. Seeder Deterministik & Idempoten
+- `AccountSeeder`: Mengisi 5 akun baku Chart of Accounts (1000, 2000, 2100, 2110, 3000).
+- `DemoGrosirSeeder`: Membangun 2 toko demo grosir (`Sembako Berkah Grosir` dan `Sumber Plastik & Packing Hub`) beserta produk, tier harga, komisi, tarif ongkir per kg, rekening bank, dan proyeksi saldo.
+- Idempoten penuh via `updateOrCreate` dan `firstOrNew`.
+
+### D. Quality Gate & Evidence
+- Automated test constraint MariaDB: `tests/Feature/DatabaseConstraintTest.php` (8 passed).
+- Total test suite: **55 passed (156 assertions)**.
+- Kamus data lengkap: `docs/data-dictionary.md`.
+- Evidence pengujian, query plan EXPLAIN, dan `schema-dump.sql` tersimpan di `evidence/pertemuan-03/`.
