@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -17,6 +18,8 @@ use Illuminate\Support\Carbon;
  */
 class CommissionRate extends Model
 {
+    use BelongsToTenant;
+
     protected $fillable = [
         'store_id',
         'rate_percent',

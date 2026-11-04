@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Store;
+use App\Models\StoreAdmin;
 use App\Models\User;
 use App\Modules\Admin\AdminServiceProvider;
 use App\Modules\Catalog\CatalogServiceProvider;
@@ -39,8 +41,10 @@ class ModularFoundationTest extends TestCase
 
     public function test_tenant_operator_can_open_tenant_dashboard(): void
     {
-        $this->actingAs($this->user('tenant'));
-        $this->get(route('tenant.dashboard', ['tenant' => 'demo']))->assertOk();
+        $user = $this->user('tenant');
+        $this->actingAs($user);
+        $store = $this->storeWithAdmin($user);
+        $this->get(route('tenant.dashboard', ['tenant' => $store->slug]))->assertOk();
     }
 
     public function test_admin_can_open_admin_dashboard(): void
@@ -56,20 +60,24 @@ class ModularFoundationTest extends TestCase
         $this->get(route('admin.dashboard'))->assertForbidden();
 
         $this->actingAs($this->user('admin'));
-        $this->get(route('tenant.dashboard', ['tenant' => 'demo']))->assertForbidden();
+        $store = Store::query()->create(['slug' => 'toko-lain', 'name' => 'Toko Lain', 'status' => 'aktif']);
+        $this->get(route('tenant.dashboard', ['tenant' => $store->slug]))->assertForbidden();
     }
 
     public function test_user_without_role_is_forbidden_on_internal_contexts(): void
     {
         $this->actingAs($this->user(null));
-        $this->get(route('tenant.dashboard', ['tenant' => 'demo']))->assertForbidden();
+        $store = Store::query()->create(['slug' => 'toko-lain-2', 'name' => 'Toko Lain 2', 'status' => 'aktif']);
+        $this->get(route('tenant.dashboard', ['tenant' => $store->slug]))->assertForbidden();
         $this->get(route('admin.dashboard'))->assertForbidden();
     }
 
     public function test_suspended_operator_is_forbidden(): void
     {
-        $this->actingAs($this->user('tenant', status: 'suspended'));
-        $this->get(route('tenant.dashboard', ['tenant' => 'demo']))->assertForbidden();
+        $user = $this->user('tenant');
+        $this->actingAs($user);
+        $store = $this->storeWithAdmin($user, status: 'nonaktif');
+        $this->get(route('tenant.dashboard', ['tenant' => $store->slug]))->assertForbidden();
     }
 
     public function test_all_six_module_providers_are_registered(): void
@@ -86,5 +94,22 @@ class ModularFoundationTest extends TestCase
         ] as $p) {
             $this->assertContains($p, $providers, "Provider tidak terdaftar: {$p}");
         }
+    }
+
+    private function storeWithAdmin(User $user, string $status = 'aktif'): Store
+    {
+        $store = Store::query()->create([
+            'slug' => 'toko-'.fake()->unique()->slug(),
+            'name' => fake()->company(),
+            'status' => $status,
+        ]);
+
+        StoreAdmin::query()->create([
+            'user_id' => $user->id,
+            'store_id' => $store->id,
+            'role' => 'owner',
+        ]);
+
+        return $store;
     }
 }

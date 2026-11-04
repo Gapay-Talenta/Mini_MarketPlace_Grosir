@@ -1,0 +1,32 @@
+# Stage Checklist — Pertemuan 04
+
+- [x] **Tahap 1: Definisi Konteks dan Aturan Akses**
+  - Klasifikasi 11 model store-owned vs platform-scoped.
+  - Alur otorisasi resolver: 404 (toko tak ditemukan) -> 403 (non-aktif) -> 403 (non-anggota).
+- [x] **Tahap 2: Implementasi `TenantContext` & Queue Pattern**
+  - Dibuat `app/Support/Tenancy/TenantContext.php` (fail-fast, set, clear, has, store, id, idOrNull).
+  - Didaftarkan sebagai `scoped()` di `AppServiceProvider.php`.
+  - Pola background job `app/Jobs/CountStoreProducts.php` dengan `try ... finally`.
+- [x] **Tahap 3: Middleware Resolver & Role Check**
+  - Dibuat middleware `app/Http/Middleware/SetTenantContext.php`.
+  - Didaftarkan alias `'tenant'` di `bootstrap/app.php`.
+  - Rute portal tenant di `PortalRoutes::tenant()` mengikat parameter `{tenant:slug}` dan middleware `tenant`.
+  - Refactor test `ModularFoundationTest.php` dan `ModuleConventionTest.php`.
+- [x] **Tahap 4: Global Scope & Model Integration**
+  - Dibuat trait `app/Models/Concerns/BelongsToTenant.php` (`addGlobalScope('tenant')` + `creating auto-fill`).
+  - Dipasang pada 11 model store-owned.
+  - Verifikasi keamanan mass-assignment `store_id`.
+- [x] **Tahap 5: Policy dan Scoped Route Binding**
+  - Dibuat `ProductPolicy`, `SubOrderPolicy`, `WithdrawalPolicy`.
+  - Diaktifkan `scopeBindings()` pada `PortalRoutes::tenant()`.
+  - Dibuat controller sample pembuktian `app/Modules/Catalog/Http/Controllers/TenantProductController.php`.
+  - Didaftarkan rute modul di `app/Modules/Catalog/routes/tenant.php`.
+- [x] **Tahap 6: Public Query & Controlled Bypass**
+  - Dibuat service `app/Modules/Catalog/Services/PublicCatalogQuery.php`.
+  - Bypass eksplisit `withoutGlobalScope('tenant')` dengan filter pengganti status toko `'aktif'` dan produk `'aktif'`.
+  - Audit penggunaan bypass terpusat.
+- [x] **Tahap 7: Security Tests & Quality Gate**
+  - Dibuat feature test `tests/Feature/TenantIsolationTest.php` (10 passing).
+  - 65 test suite lolos (100% PASS).
+  - Pint, PHPStan, dan Vite build bersih.
+  - Dokumentasi arsitektur & status implementasi diperbarui.

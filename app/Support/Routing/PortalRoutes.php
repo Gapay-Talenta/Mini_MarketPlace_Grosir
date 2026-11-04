@@ -25,12 +25,15 @@ final class PortalRoutes
 
     /**
      * Portal operator toko grosir / tenant (internal).
+     * Dilindungi auth + verified + resolver SetTenantContext (alias 'tenant').
+     * Mengikat parameter {tenant:slug} langsung ke model Store.
      */
     public static function tenant(Closure|string $routes): void
     {
-        Route::middleware(['web', 'auth', 'verified', 'role:tenant'])
-            ->prefix('tenant/{tenant}')
+        Route::middleware(['web', 'auth', 'verified', 'tenant'])
+            ->prefix('tenant/{tenant:slug}')
             ->name('tenant.')
+            ->scopeBindings() // Mengunci model anak di bawah toko induk pada URL
             ->group($routes);
     }
 

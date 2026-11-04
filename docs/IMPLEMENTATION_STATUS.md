@@ -12,15 +12,15 @@ Dokumen pelacak progres mingguan kumulatif pengembangan aplikasi **Mini MarketPl
 
 ## 1. Ringkasan Eksekutif
 
-| Komponen                        | Status Saat Ini                                                               |
-| ------------------------------- | ----------------------------------------------------------------------------- |
-| **Fase**                        | Fase 1 — Fondasi Teknis & Data                                                |
-| **Pertemuan Terakhir Selesai**  | **Pertemuan 03** (Implementasi Basis Data, Migrasi 26 Tabel, Model, & Seeder) |
-| **Tag Git Terakhir**            | `pertemuan-02` (siap tag `pertemuan-03`)                                      |
-| **Quality Gate**                | **PASS** (55 test passing, Pint clean, PHPStan clean, Vite clean)             |
-| **Database Dev / Test**         | `project_sem3` / `project_sem3_test` (MariaDB 11.4+)                          |
-| **Cache, Queue, Session, Cart** | Redis 7.x (`127.0.0.1:6379`)                                                  |
-| **Broadcasting / Realtime**     | Laravel Reverb (`0.0.0.0:8080`)                                               |
+| Komponen                        | Status Saat Ini                                                                                         |
+| ------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Fase**                        | Fase 1 — Keamanan Data & Isolasi Multi-Tenant                                                           |
+| **Pertemuan Terakhir Selesai**  | **Pertemuan 04** (Isolasi Multi-Tenant Berlapis: Context, Scope, Policy, Scoped Binding & Controlled Bypass) |
+| **Tag Git Terakhir**            | `pertemuan-03` (siap tag `pertemuan-04`)                                                                |
+| **Quality Gate**                | **PASS** (65 test passing, Pint clean, PHPStan clean, Vite clean)                                       |
+| **Database Dev / Test**         | `project_sem3` / `project_sem3_test` (MariaDB 11.4+)                                                    |
+| **Cache, Queue, Session, Cart** | Redis 7.x (`127.0.0.1:6379`)                                                                            |
+| **Broadcasting / Realtime**     | Laravel Reverb (`0.0.0.0:8080`)                                                                         |
 
 ---
 
@@ -31,8 +31,8 @@ Dokumen pelacak progres mingguan kumulatif pengembangan aplikasi **Mini MarketPl
 | **01** | **Setup toolchain, Laravel 13, Livewire 4, MariaDB, Redis** | Repo bersih, health check, Reverb terpasang & terhubung, DB dev & test terpisah                                                        | `php artisan test` (31 passed), Pint PASS, `npm run build` PASS       | ✅ **SELESAI**  |
 | **02** | **Modular monolith, auth 3 konteks, layout**                | Struktur 6 modul, route group `PortalRoutes`, registrasi + login customer (name, email, password, phone), layout customer/tenant/admin | Route list valid, auth gate test, layout render test (47 passed)      | ✅ **SELESAI**  |
 | **03** | **Migrasi baseline + tabel ledger**                         | Tabel inti (26 tabel) + 5 akun COA + `ledger_entries` + `balance_projections` + model & seeder                                         | `migrate:fresh --seed` sukses, FK komposit MariaDB (55 passed)        | ✅ **SELESAI**  |
-| **04** | Isolasi multi-tenant                                        | `TenantContext`, `BelongsToTenant` scope, policy tenant, composite FK enforcement                                                      | Matrix allow/deny tenant isolation test                               | ⏳ _Berikutnya_ |
-| **05** | Admin hub + admin toko                                      | CRUD toko, role `store_admins`, komisi effective-dated, rekening toko terenkripsi, tarif ongkir/kg, audit log                          | Commission overlap guard test, encrypted bank test                    |   ⬜ Rencana    |
+| **04** | **Isolasi multi-tenant berlapis**                           | `TenantContext`, `BelongsToTenant` scope, policy tenant, scoped binding, controlled bypass & test allow/deny                            | Matrix allow/deny tenant isolation test (65 passed)                   | ✅ **SELESAI**  |
+| **05** | Admin hub + admin toko                                      | CRUD toko, role `store_admins`, komisi effective-dated, rekening toko terenkripsi, tarif ongkir/kg, audit log                          | Commission overlap guard test, encrypted bank test                    | ⏳ _Berikutnya_ |
 | **06** | Katalog publik + katalog toko + tier harga                  | CRUD produk (kategori, satuan, foto, deskripsi, berat), 1 harga normal + maks 4 tier grosir, stok, katalog publik                      | Tier resolver test, withoutGlobalScopes review                        |   ⬜ Rencana    |
 | **07** | Cart multi-toko di Redis (milik user)                       | `CartService` (key terikat `user_id`), revalidasi harga & stok saat buka cart, UI cart Livewire, login gate                            | Cart isolation per user test, stock/price revalidation test           |   ⬜ Rencana    |
 | **08** | Checkout atomik multi-toko                                  | Order induk + sub-order, snapshot tier & satuan, ongkir per berat, deduksi stok atomik, idempotency key, riwayat order                 | Atomic checkout test, oversell lock test, idempotency test            |   ⬜ Rencana    |
@@ -81,7 +81,7 @@ Dokumen pelacak progres mingguan kumulatif pengembangan aplikasi **Mini MarketPl
 
 | #   | Skenario Uji Wajib                                                                  | Pertemuan Target | Status |
 | --- | ----------------------------------------------------------------------------------- | :--------------: | :----: |
-| 1   | Isolasi tenant (toko A tidak bisa akses resource toko B)                            |       Mg 4       |   ⬜   |
+| 1   | Isolasi tenant (toko A tidak bisa akses resource toko B)                            |       Mg 4       |   ✅   |
 | 2   | Idempotency checkout (retry key sama tidak mendobelkan order)                       |       Mg 8       |   ⬜   |
 | 3   | Idempotency webhook (`provider_event_id` sama diputar ulang hanya settle 1x)        |      Mg 10       |   ⬜   |
 | 4   | Idempotency ledger (posting key sama di-dedup; append-only)                         |      Mg 10       |   ⬜   |
@@ -121,3 +121,28 @@ Dokumen pelacak progres mingguan kumulatif pengembangan aplikasi **Mini MarketPl
 - Total test suite: **55 passed (156 assertions)**.
 - Kamus data lengkap: `docs/data-dictionary.md`.
 - Evidence pengujian, query plan EXPLAIN, dan `schema-dump.sql` tersimpan di `evidence/pertemuan-03/`.
+
+---
+
+## 6. Rincian Capaian Pertemuan 04
+
+### A. Lapisan Keamanan & Isolasi Multi-Tenant Berlapis
+- **`TenantContext` (`App\Support\Tenancy\TenantContext`):** Didaftarkan sebagai container binding `scoped()` di `AppServiceProvider`. Mengelola state `Store` aktif dengan prinsip *fail-fast*, otomatis di-reset antar siklus request HTTP dan job queue (mencegah kebocoran memori pada long-running worker).
+- **Middleware Resolver `SetTenantContext`:** Mengikat parameter `{tenant:slug}`, memvalidasi status toko `$store->isActive()` (403 jika non-aktif), memverifikasi keanggotaan pengguna di `store_admins` (403 jika bukan admin toko), serta membersihkan context pada blok `finally`.
+- **Trait `BelongsToTenant` (`App\Models\Concerns\BelongsToTenant`):** Menerapkan global scope `WHERE store_id = ?` berkualifikasi tabel (`qualifyColumn`) dan auto-fill `store_id` saat create. Dipasang pada 11 model *store-owned*.
+- **Scoped Route Binding:** Rute portal tenant di `PortalRoutes::tenant()` mengaktifkan `scopeBindings()`, memastikan child model (seperti `/products/{product}`) ditolak 404 jika bukan milik toko pada URL.
+- **Eloquent Policies:** `ProductPolicy`, `SubOrderPolicy`, dan `WithdrawalPolicy` memvalidasi kepemilikan store pada level ability aksi pengguna.
+- **Pola Background Queue Job (`CountStoreProducts`):** Menerapkan pola deserialisasi primitif `$storeId`, pengisian context di method `handle()`, dan sanitasi mutlak di blok `finally`.
+
+### B. Controlled Bypass untuk Katalog Publik Pembeli
+- **`PublicCatalogQuery` (`App\Modules\Catalog\Services\PublicCatalogQuery`):** Satu-satunya jalur resmi penerobosan scope (`withoutGlobalScope('tenant')`) dengan filter pengganti ketat: hanya menampilkan produk berstatus `'aktif'` dari toko yang berstatus `'aktif'`.
+- Audit keamanan: Penerobosan scope diisolasi dan dilarang muncul di controller/Livewire.
+
+### C. Quality Gate & Acceptance Test
+- **Acceptance Test Wajib #1 (§12 Draft) TERPENUHI:** Test matriks allow/deny Toko A vs Toko B di `tests/Feature/TenantIsolationTest.php` (10 test passing).
+- Regresi routing dan modular probe terverifikasi di `ModularFoundationTest.php` dan `ModuleConventionTest.php`.
+- **Total Test Suite:** **65 passed (188 assertions)**, 0 failed, 0 skipped.
+- **Pint:** PASS (clean code style).
+- **PHPStan:** PASS (Level 5, 0 errors).
+- **Vite Build:** PASS (`✓ built in 4.03s`).
+- Evidence pengujian tersimpan di `evidence/pertemuan-04/`.

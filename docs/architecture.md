@@ -66,7 +66,7 @@ Infrastructure (Eloquent, Gateway, Redis, Vendor)  ─────────�
 | Konteks Portal | File Route Dasar | Prefix URI | Route Name | Middleware Lapisan Keamanan |
 |---|---|---|---|---|
 | **Pelanggan (Publik)** | `routes/customer.php` + modul `routes/customer.php` | `toko/{store}` | `customer.*` | `web` |
-| **Mitra Toko (Tenant)** | `routes/tenant.php` + modul `routes/tenant.php` | `tenant/{tenant}` | `tenant.*` | `web, auth, verified, role:tenant` |
+| **Mitra Toko (Tenant)** | `routes/tenant.php` + modul `routes/tenant.php` | `tenant/{tenant:slug}` | `tenant.*` | `web, auth, verified, tenant` (`SetTenantContext`) + `scopeBindings()` |
 | **Admin Platform** | `routes/admin.php` + modul `routes/admin.php` | `admin` | `admin.*` | `web, auth, verified, role:admin` |
 
 Grup portal didefinisikan secara **tunggal** di `App\Support\Routing\PortalRoutes`.
@@ -93,3 +93,16 @@ File route milik modul memanggil pembungkus `PortalRoutes::{portal}()` sehingga 
   - `<x-input>`: Input form dengan focus ring amber.
   - `<x-status-badge>`: Badge penanda status (*active*, *pending*, *suspended*, *default*).
   - `<x-empty-state>`: Penampung visual bergaris putus-putus (*dashed border*) saat tabel/list belum terisi data.
+
+---
+
+## 7. Isolasi Multi-Tenant Berlapis (Defense-in-Depth — Modul 4)
+
+Aplikasi menerapkan 5 lapisan pertahanan isolasi toko grosir pada shared database:
+1. **Context & Lifecycle (`TenantContext`):** Didaftarkan sebagai container binding `scoped()` di `AppServiceProvider`. Menjamin state toko aktif terisolasi per siklus request HTTP atau job queue, dan otomatis dibersihkan saat request/job berakhir.
+2. **Middleware Resolver (`SetTenantContext`):** Mengikat model `Store` via `{tenant:slug}`, memvalidasi status `$store->isActive()`, dan memeriksa keanggotaan pengguna di tabel pivot `store_admins` (akses non-anggota/toko non-aktif ditolak dengan HTTP 403). Menyediakan context di awal dan membersihkannya di blok `finally`.
+3. **ORM Global Scope & Auto-Fill (`BelongsToTenant`):** Trait otomatis menambahkan klausul `WHERE store_id = ?` berkualifikasi tabel (`qualifyColumn`) pada seluruh model *store-owned*, serta menginjeksi `store_id` saat event `creating`. Kolom `store_id` tidak diizinkan di-mass-assign dari request client (*fail-closed*).
+4. **Scoped Route Binding & Policies:** Rute portal tenant menegakkan `scopeBindings()`, memastikan resource anak (seperti `/products/{product}`) ditolak 404 jika bukan milik toko pada URL. Model policies (`ProductPolicy`, `SubOrderPolicy`, `WithdrawalPolicy`) memvalidasi kepemilikan toko aktif sebelum aksi eksekusi.
+5. **Database Integrity:** Composite Foreign Key `(store_id, id)` MariaDB menjamin konsistensi data di level penyimpanan fisik.
+
+**Controlled Bypass:** Penerobosan scope lintas-toko yang sah (katalog publik pembeli) diisolasi di `App\Modules\Catalog\Services\PublicCatalogQuery`, memanggil `withoutGlobalScope('tenant')` secara eksplisit dan wajib disertai filter pengganti status toko `'aktif'` dan status produk `'aktif'`. Cross-tenant manipulation ditolak 403/404.

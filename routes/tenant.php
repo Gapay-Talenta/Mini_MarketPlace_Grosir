@@ -1,7 +1,12 @@
 <?php
 
+use App\Models\Store;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/dashboard', function (string $tenant) {
+/**
+ * Konteks OPERATOR TOKO GROSIR (internal).
+ * Prefix: tenant/{tenant:slug}, Route name: tenant.*
+ */
+Route::get('/dashboard', function (Store $tenant) {
     return view('tenant.dashboard', ['tenant' => $tenant]);
 })->name('dashboard');

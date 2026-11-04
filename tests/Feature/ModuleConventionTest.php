@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\Store;
+use App\Models\StoreAdmin;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Route as RoutingRoute;
@@ -52,24 +54,40 @@ class ModuleConventionTest extends TestCase
         $this->assertNotNull($route, 'Route modul tidak dimuat oleh provider');
         $this->assertSame('tenant/{tenant}/probe', $route->uri());
 
-        foreach (['web', 'auth', 'verified', 'role:tenant'] as $middleware) {
+        // Menguji bahwa route modul otomatis mewarisi middleware portal tenant
+        foreach (['web', 'auth', 'verified', 'tenant'] as $middleware) {
             $this->assertContains($middleware, $route->gatherMiddleware());
         }
+        $this->assertTrue($route->enforcesScopedBindings(), 'Route portal tenant wajib menegakkan scoped bindings.');
     }
 
     public function test_module_route_is_guarded_like_core_portal_routes(): void
     {
         $this->registerProbeModule();
 
-        $url = route('tenant.probe', ['tenant' => 'demo']);
+        // 1. Siapkan user yang sah dan kaitkan ke toko yang dibuat
+        $member = $this->user('tenant');
+        $store = $this->storeWithAdmin($member);
+        $url = route('tenant.probe', ['tenant' => $store->slug]);
 
+        // Skenario A: Guest (belum login) dialihkan ke login
         $this->get($url)->assertRedirect(route('login'));
 
+        // Skenario B: Admin platform mencoba masuk -> 403 Forbidden (bukan anggota toko ini)
         $this->actingAs($this->user('admin'));
         $this->get($url)->assertForbidden();
 
-        $this->actingAs($this->user('tenant'));
-        $this->get($url)->assertOk()->assertSee('Probe page')->assertSee('Probe count: 0');
+        // Skenario C: User dengan role tenant lain (bukan admin toko ini) -> 403 Forbidden
+        $otherTenantUser = $this->user('tenant');
+        $this->actingAs($otherTenantUser);
+        $this->get($url)->assertForbidden();
+
+        // Skenario D: Anggota sah ($member) -> 200 OK dan halaman probe modul terbuka
+        $this->actingAs($member);
+        $this->get($url)
+            ->assertOk()
+            ->assertSee('Probe page')
+            ->assertSee('Probe count: 0');
     }
 
     public function test_module_livewire_component_is_resolved_through_module_namespace(): void
@@ -87,7 +105,7 @@ class ModuleConventionTest extends TestCase
         $this->registerProbeModule();
 
         $portals = [
-            'tenant.' => ['web', 'auth', 'verified', 'role:tenant'],
+            'tenant.' => ['web', 'auth', 'verified', 'tenant'],
             'admin.' => ['web', 'auth', 'verified', 'role:admin'],
             'customer.' => ['web'],
         ];
@@ -107,5 +125,26 @@ class ModuleConventionTest extends TestCase
         }
 
         $this->assertGreaterThanOrEqual(4, $checked);
+    }
+
+    /**
+     * Membuat data toko aktif dan mendaftarkan user yang diberikan
+     * sebagai admin pengelola di tabel store_admins.
+     */
+    private function storeWithAdmin(User $user, string $status = 'aktif'): Store
+    {
+        $store = Store::query()->create([
+            'slug' => 'toko-'.fake()->unique()->slug(),
+            'name' => fake()->company(),
+            'status' => $status,
+        ]);
+
+        StoreAdmin::query()->create([
+            'user_id' => $user->id,
+            'store_id' => $store->id,
+            'role' => 'operator',
+        ]);
+
+        return $store;
     }
 }
