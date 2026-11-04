@@ -16,7 +16,7 @@ Dokumen pelacak progres mingguan kumulatif pengembangan aplikasi **Mini MarketPl
 | ------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | **Fase**                        | Fase 1 — Keamanan Data & Isolasi Multi-Tenant                                                           |
 | **Pertemuan Terakhir Selesai**  | **Pertemuan 04** (Isolasi Multi-Tenant Berlapis: Context, Scope, Policy, Scoped Binding & Controlled Bypass) |
-| **Tag Git Terakhir**            | `pertemuan-03` (siap tag `pertemuan-04`)                                                                |
+| **Tag Git Terakhir**            | `pertemuan-04`                                                                                          |
 | **Quality Gate**                | **PASS** (65 test passing, Pint clean, PHPStan clean, Vite clean)                                       |
 | **Database Dev / Test**         | `project_sem3` / `project_sem3_test` (MariaDB 11.4+)                                                    |
 | **Cache, Queue, Session, Cart** | Redis 7.x (`127.0.0.1:6379`)                                                                            |
