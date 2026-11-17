@@ -256,3 +256,28 @@ test('penugasan role berhasil dan sistem melindungi owner terakhir dari pencabut
 
     expect(StoreAdmin::query()->where('store_id', $store->id)->where('user_id', $operator->id)->exists())->toBeFalse();
 });
+
+test('dashboard admin menampilkan daftar toko dari database dan tautan pendaftaran toko', function () {
+    $this->actingAs(createHubAdmin());
+
+    $this->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertSee('Belum Ada Toko Terdaftar')
+        ->assertSee(route('admin.stores.create'))
+        ->assertSee(route('admin.stores.index'));
+
+    $store = createStoreSample('toko-dashboard-uji');
+    CommissionRate::query()->create([
+        'store_id' => $store->id,
+        'rate_percent' => '11.50',
+        'valid_from' => now()->subDay(),
+        'valid_to' => null,
+    ]);
+
+    $this->get(route('admin.dashboard'))
+        ->assertOk()
+        ->assertSee('Toko Grosir Uji')
+        ->assertSee('toko-dashboard-uji')
+        ->assertSee('11,5%')
+        ->assertSee(route('admin.stores.edit', $store));
+});

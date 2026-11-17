@@ -44,7 +44,11 @@ class ModularFoundationTest extends TestCase
         $user = $this->user('tenant');
         $this->actingAs($user);
         $store = $this->storeWithAdmin($user);
-        $this->get(route('tenant.dashboard', ['tenant' => $store->slug]))->assertOk();
+        $this->get(route('tenant.dashboard', ['tenant' => $store->slug]))
+            ->assertOk()
+            ->assertSee($store->name)
+            ->assertSee($store->slug)
+            ->assertDontSee('"created_at"');
     }
 
     public function test_admin_can_open_admin_dashboard(): void

@@ -13,9 +13,12 @@
             </div>
             <span class="text-xs text-slate-500">/</span>
             <span class="text-sm font-bold text-slate-100 truncate">{{ $title }}</span>
-            @isset($headerRight)
-                <div class="ms-auto flex items-center gap-2">{{ $headerRight }}</div>
-            @endisset
+            <div class="ms-auto flex items-center gap-2">
+                @isset($headerRight)
+                    {{ $headerRight }}
+                @endisset
+                <x-account-menu variant="dark" />
+            </div>
         </header>
 
         <main class="flex-1 p-4">

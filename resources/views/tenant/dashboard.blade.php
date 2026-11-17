@@ -3,11 +3,13 @@
         <div class="flex flex-wrap items-center justify-between gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-2xs dark:border-slate-800 dark:bg-slate-900">
             <div>
                 <div class="flex items-center gap-3">
-                    <h1 class="text-xl font-black text-slate-900 dark:text-slate-100">Panel Operasional Toko</h1>
-                    <x-status-badge status="active">Mitra Aktif</x-status-badge>
+                    <h1 class="text-xl font-black text-slate-900 dark:text-slate-100">{{ $tenant->name }}</h1>
+                    <x-status-badge :status="$tenant->status === 'aktif' ? 'active' : 'suspended'">
+                        {{ $tenant->status === 'aktif' ? 'Mitra Aktif' : 'Mitra Nonaktif' }}
+                    </x-status-badge>
                 </div>
                 <p class="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                    ID Toko / Tenant Slug: <span class="font-mono font-bold text-amber-600 dark:text-amber-400">{{ $tenant }}</span>
+                    Slug Toko: <span class="font-mono font-bold text-amber-600 dark:text-amber-400">{{ $tenant->slug }}</span>
                 </p>
             </div>
 

@@ -350,6 +350,13 @@
     color: var(--orange-600);
     font-weight: 600;
   }
+
+  /* Halaman Autentikasi */
+  .auth-split { display: grid; grid-template-columns: 5fr 6fr; min-height: 520px; }
+  .auth-aside { background: var(--slate-900); color: #fff; padding: 28px; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; border-right: 3px solid var(--amber-500); }
+  .auth-main { background: var(--slate-50); padding: 28px 32px; display: flex; flex-direction: column; }
+  .auth-label { font-size: 11px; font-weight: 700; color: var(--slate-700); display: block; margin-bottom: 4px; }
+  .auth-input { width: 100%; padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 12px; font-family: inherit; background: #fff; }
 </style>
 </head>
 <body>
@@ -364,6 +371,7 @@
   <div class="nav-links">
     <a href="#pengantar">Pengantar</a>
     <a href="#diagram">Diagram Use Case</a>
+    <a href="#grup-auth">Autentikasi</a>
     <a href="#grup-publik">Portal Publik</a>
     <a href="#grup-customer">Portal Pembeli</a>
     <a href="#grup-tenant">Portal Toko Grosir</a>
@@ -594,6 +602,265 @@
   </div>
 </section>
 
+<!-- ============ SECTION 2B: AUTENTIKASI ============ -->
+<section id="grup-auth" style="background:#fff;">
+  <div class="section-header">
+    <span class="section-badge">AUTENTIKASI</span>
+    <h2 class="section-title">Login, Registrasi &amp; Logout (`Fortify`)</h2>
+  </div>
+  <p class="section-desc">
+    Alur autentikasi bersama untuk seluruh portal. Pembeli mendaftar sendiri (No WhatsApp wajib), sedangkan staf toko dan admin hub dibuat oleh admin. Setelah login, pengguna diarahkan ke portal sesuai peran: <code style="font-family:var(--font-mono);font-size:12px;background:#fff;padding:2px 6px;border:1px solid #cbd5e1;">customer</code>, <code style="font-family:var(--font-mono);font-size:12px;background:#fff;padding:2px 6px;border:1px solid #cbd5e1;">store_admin</code>, atau <code style="font-family:var(--font-mono);font-size:12px;background:#fff;padding:2px 6px;border:1px solid #cbd5e1;">admin_hub</code>.
+  </p>
+
+  <div class="screens-grid">
+    <!-- AUTH-01: Login -->
+    <div class="screen-card">
+      <div class="screen-meta">
+        <span class="meta-tag-id">SCREEN-AUTH-01</span>
+        <span class="meta-tag-title">Login Pengguna</span>
+        <span class="meta-tag-portal">POST /login</span>
+      </div>
+      <div class="desktop-frame" style="width:760px;">
+        <div class="browser-header">
+          <div class="traffic-lights">
+            <div class="traffic-dot dot-red"></div>
+            <div class="traffic-dot dot-yellow"></div>
+            <div class="traffic-dot dot-green"></div>
+          </div>
+          <div class="url-bar"><span class="protocol">https://</span>hubgrosir.test/login</div>
+        </div>
+        <div class="auth-split">
+          <div class="auth-aside">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:22px;height:22px;background:var(--amber-500);border-radius:3px;"></div>
+              <span style="font-size:15px;font-weight:800;letter-spacing:0.5px;">HUB TOKO GROSIR</span>
+            </div>
+            <div>
+              <div style="font-size:24px;font-weight:800;line-height:1.25;letter-spacing:-0.3px;margin-bottom:10px;">Belanja grosir lintas toko dalam satu keranjang.</div>
+              <div style="font-size:12.5px;color:var(--slate-300);line-height:1.6;">Harga tier otomatis, ongkir per toko berdasarkan berat, dan pelacakan kiriman dari satu akun.</div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <span class="badge badge-amber">Tier Grosir</span>
+              <span class="badge badge-amber">Multi-Toko</span>
+              <span class="badge badge-amber">Notifikasi WhatsApp</span>
+            </div>
+          </div>
+          <div class="auth-main">
+            <h3 style="margin:0 0 6px;font-size:22px;font-weight:800;color:var(--slate-900);">Masuk ke Akun</h3>
+            <p style="margin:0 0 20px;font-size:12px;color:var(--slate-600);line-height:1.5;">Gunakan email dan password yang terdaftar.</p>
+            <form style="display:flex;flex-direction:column;gap:14px;">
+              <div>
+                <label class="auth-label">Email:</label>
+                <input class="auth-input" type="email" value="budi.berkah@gmail.com">
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                  <label class="auth-label" style="margin:0;">Password:</label>
+                  <a href="#" style="font-size:11px;font-weight:700;">Lupa password?</a>
+                </div>
+                <input class="auth-input" type="password" value="••••••••••••">
+              </div>
+              <label style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--slate-700);font-weight:600;">
+                <span style="width:14px;height:14px;border:2px solid var(--slate-800);border-radius:3px;background:var(--amber-500);display:inline-block;"></span>
+                Ingat saya di perangkat ini
+              </label>
+              <button type="button" class="btn btn-amber btn-block" style="padding:11px;margin-top:4px;">Masuk</button>
+            </form>
+            <div style="margin-top:18px;padding:10px 12px;background:var(--rose-100);border:1px solid var(--rose-500);border-radius:4px;font-size:11.5px;color:var(--rose-600);font-weight:600;">
+              Contoh galat: Email atau password tidak sesuai.
+            </div>
+            <div style="margin-top:auto;padding-top:20px;text-align:center;font-size:11.5px;color:var(--slate-600);">
+              Belum punya akun? <a href="#auth-register" style="font-weight:700;">Daftar sebagai pembeli</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tech-note" style="max-width:760px;">
+        <strong>Pengalihan Peran:</strong> Setelah login, <code>customer</code> menuju <code>/katalog</code>, <code>store_admin</code> menuju <code>/toko/{slug}/produk</code>, dan <code>admin_hub</code> menuju <code>/admin/komisi</code>. Percobaan login dibatasi (throttle) 5 kali per menit.
+      </div>
+    </div>
+
+    <!-- AUTH-02: Registrasi Desktop -->
+    <div class="screen-card" id="auth-register">
+      <div class="screen-meta">
+        <span class="meta-tag-id">SCREEN-AUTH-02</span>
+        <span class="meta-tag-title">Registrasi Pembeli (Desktop)</span>
+        <span class="meta-tag-portal">POST /register</span>
+      </div>
+      <div class="desktop-frame" style="width:760px;">
+        <div class="browser-header">
+          <div class="traffic-lights">
+            <div class="traffic-dot dot-red"></div>
+            <div class="traffic-dot dot-yellow"></div>
+            <div class="traffic-dot dot-green"></div>
+          </div>
+          <div class="url-bar"><span class="protocol">https://</span>hubgrosir.test/register</div>
+        </div>
+        <div class="auth-split">
+          <div class="auth-aside">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:22px;height:22px;background:var(--amber-500);border-radius:3px;"></div>
+              <span style="font-size:15px;font-weight:800;letter-spacing:0.5px;">HUB TOKO GROSIR</span>
+            </div>
+            <div>
+              <div style="font-size:24px;font-weight:800;line-height:1.25;letter-spacing:-0.3px;margin-bottom:10px;">Daftar sekali, belanja dari banyak toko grosir.</div>
+              <div style="font-size:12.5px;color:var(--slate-300);line-height:1.6;">Nomor WhatsApp dipakai untuk notifikasi pembayaran, pengiriman, dan resi. Tanpa OTP pada versi MVP.</div>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;font-size:12px;color:var(--slate-300);">
+              <div style="display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;background:var(--amber-500);border-radius:2px;"></span>Harga tier otomatis sesuai jumlah</div>
+              <div style="display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;background:var(--amber-500);border-radius:2px;"></span>Satu order induk, banyak sub-order toko</div>
+              <div style="display:flex;align-items:center;gap:8px;"><span style="width:8px;height:8px;background:var(--amber-500);border-radius:2px;"></span>Pantau status kiriman real-time</div>
+            </div>
+          </div>
+          <div class="auth-main">
+            <h3 style="margin:0 0 6px;font-size:22px;font-weight:800;color:var(--slate-900);">Buat Akun Pembeli</h3>
+            <p style="margin:0 0 18px;font-size:12px;color:var(--slate-600);line-height:1.5;">Isi data berikut untuk mulai berbelanja.</p>
+            <form style="display:flex;flex-direction:column;gap:12px;">
+              <div>
+                <label class="auth-label">Nama Pemilik / Toko Kelontong:</label>
+                <input class="auth-input" type="text" value="Budi Santoso (Toko Berkah)">
+              </div>
+              <div>
+                <label class="auth-label">Email:</label>
+                <input class="auth-input" type="email" value="budi.berkah@gmail.com">
+              </div>
+              <div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                  <label class="auth-label" style="margin:0;">Nomor WhatsApp (Wajib):</label>
+                  <span class="badge badge-amber" style="font-size:9.5px;">Target Notifikasi</span>
+                </div>
+                <input class="auth-input" type="tel" value="081234567890" style="border:2px solid var(--slate-800);font-weight:700;font-family:var(--font-mono);">
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                  <label class="auth-label">Password:</label>
+                  <input class="auth-input" type="password" value="••••••••••••">
+                </div>
+                <div>
+                  <label class="auth-label">Konfirmasi Password:</label>
+                  <input class="auth-input" type="password" value="••••••••••••">
+                </div>
+              </div>
+              <label style="display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--slate-700);font-weight:600;">
+                <span style="width:14px;height:14px;border:2px solid var(--slate-800);border-radius:3px;background:var(--amber-500);display:inline-block;"></span>
+                Saya menyetujui syarat dan ketentuan platform
+              </label>
+              <button type="button" class="btn btn-amber btn-block" style="padding:11px;margin-top:4px;">Daftar &amp; Mulai Belanja</button>
+            </form>
+            <div style="margin-top:auto;padding-top:16px;text-align:center;font-size:11.5px;color:var(--slate-600);">
+              Sudah punya akun? <a href="#grup-auth" style="font-weight:700;">Masuk di sini</a>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tech-note" style="max-width:760px;">
+        <strong>Validasi:</strong> <code>users.phone</code> wajib dan unik, password minimal 8 karakter, dan akun baru otomatis berperan <code>customer</code>. Versi mobile tersedia pada <code>SCREEN-CUS-01</code>.
+      </div>
+    </div>
+
+    <!-- AUTH-03: Logout -->
+    <div class="screen-card">
+      <div class="screen-meta">
+        <span class="meta-tag-id">SCREEN-AUTH-03</span>
+        <span class="meta-tag-title">Menu Akun &amp; Konfirmasi Logout</span>
+        <span class="meta-tag-portal">POST /logout</span>
+      </div>
+      <div class="desktop-frame" style="width:760px;">
+        <div class="browser-header">
+          <div class="traffic-lights">
+            <div class="traffic-dot dot-red"></div>
+            <div class="traffic-dot dot-yellow"></div>
+            <div class="traffic-dot dot-green"></div>
+          </div>
+          <div class="url-bar"><span class="protocol">https://</span>hubgrosir.test/katalog</div>
+        </div>
+        <div style="background:#f8fafc;min-height:430px;position:relative;padding:16px 24px;">
+          <!-- Topbar dengan menu akun -->
+          <div style="display:flex;justify-content:space-between;align-items:center;padding-bottom:14px;border-bottom:1px solid #e2e8f0;">
+            <div style="display:flex;align-items:center;gap:10px;">
+              <div style="width:22px;height:22px;background:var(--amber-500);border-radius:3px;"></div>
+              <span style="font-weight:800;font-size:15px;color:var(--slate-900);">HUB TOKO GROSIR</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;">
+              <span class="badge badge-slate">Keranjang (3)</span>
+              <div style="display:flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--slate-300);border-radius:4px;padding:5px 10px;">
+                <div style="width:22px;height:22px;border-radius:50%;background:var(--slate-800);color:var(--amber-400);font-size:10px;font-weight:800;display:flex;align-items:center;justify-content:center;">BS</div>
+                <span style="font-size:12px;font-weight:700;color:var(--slate-800);">Budi Santoso</span>
+              </div>
+            </div>
+          </div>
+          <!-- Dropdown -->
+          <div style="position:absolute;top:62px;right:24px;width:220px;background:#fff;border:1px solid var(--slate-300);border-radius:6px;box-shadow:0 12px 28px -8px rgba(15,23,42,0.28);overflow:hidden;z-index:2;">
+            <div style="padding:12px 14px;border-bottom:1px solid var(--slate-200);background:var(--slate-50);">
+              <div style="font-size:12px;font-weight:800;color:var(--slate-900);">Budi Santoso</div>
+              <div style="font-size:10.5px;color:var(--slate-500);font-family:var(--font-mono);">budi.berkah@gmail.com</div>
+            </div>
+            <div style="padding:6px;font-size:12px;font-weight:600;color:var(--slate-700);">
+              <div style="padding:8px 10px;border-radius:4px;">Profil Saya</div>
+              <div style="padding:8px 10px;border-radius:4px;">Pesanan Saya</div>
+              <div style="padding:8px 10px;border-radius:4px;">Pengaturan Notifikasi</div>
+            </div>
+            <div style="padding:6px;border-top:1px solid var(--slate-200);">
+              <div style="padding:8px 10px;border-radius:4px;background:var(--rose-100);color:var(--rose-600);font-size:12px;font-weight:800;">Keluar</div>
+            </div>
+          </div>
+          <!-- Overlay modal -->
+          <div style="position:absolute;inset:0;background:rgba(15,23,42,0.55);display:flex;align-items:center;justify-content:center;z-index:3;">
+            <div style="width:360px;background:#fff;border-radius:8px;border-top:4px solid var(--amber-500);box-shadow:0 20px 40px -10px rgba(15,23,42,0.4);padding:22px;">
+              <h3 style="margin:0 0 8px;font-size:17px;font-weight:800;color:var(--slate-900);">Keluar dari akun?</h3>
+              <p style="margin:0 0 16px;font-size:12.5px;color:var(--slate-600);line-height:1.55;">Sesi Anda akan diakhiri di perangkat ini. Isi keranjang tetap tersimpan di akun dan dapat dilanjutkan setelah login kembali.</p>
+              <div style="display:flex;gap:10px;">
+                <button type="button" class="btn btn-outline" style="flex:1;padding:10px;">Batal</button>
+                <button type="button" class="btn btn-slate" style="flex:1;padding:10px;">Ya, Keluar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="tech-note" style="max-width:760px;">
+        <strong>Perilaku Logout:</strong> <code>POST /logout</code> dengan token CSRF, sesi diinvalidasi dan token diregenerasi. Keranjang Redis <code>cart:user:{id}</code> tidak dihapus. Pengguna diarahkan ke <code>/login</code> dengan pesan sukses.
+      </div>
+    </div>
+
+    <!-- AUTH-04: Logout berhasil (mobile) -->
+    <div class="screen-card">
+      <div class="screen-meta">
+        <span class="meta-tag-id">SCREEN-AUTH-04</span>
+        <span class="meta-tag-title">Login Mobile &amp; Status Logout Berhasil</span>
+        <span class="meta-tag-portal">GET /login</span>
+      </div>
+      <div class="mobile-frame">
+        <div class="mobile-notch"><div class="notch-pill"></div></div>
+        <div class="mobile-screen-body" style="padding:24px 20px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:20px;">
+            <div style="width:20px;height:20px;background:var(--amber-500);border-radius:3px;"></div>
+            <span style="font-size:14px;font-weight:800;color:var(--slate-900);">HUB TOKO GROSIR</span>
+          </div>
+          <div style="margin-bottom:18px;padding:10px 12px;background:var(--emerald-100);border:1px solid var(--emerald-500);border-radius:4px;font-size:11.5px;color:var(--emerald-600);font-weight:700;">
+            Anda berhasil keluar dari akun.
+          </div>
+          <h3 style="margin:0 0 6px;font-size:22px;font-weight:800;color:var(--slate-900);">Masuk ke Akun</h3>
+          <p style="margin:0 0 20px;font-size:12px;color:var(--slate-600);line-height:1.5;">Masuk untuk melanjutkan belanja dan memantau kiriman.</p>
+          <form style="display:flex;flex-direction:column;gap:14px;">
+            <div>
+              <label class="auth-label">Email:</label>
+              <input class="auth-input" type="email" placeholder="nama@email.com">
+            </div>
+            <div>
+              <label class="auth-label">Password:</label>
+              <input class="auth-input" type="password" placeholder="Password">
+            </div>
+            <button type="button" class="btn btn-amber btn-block" style="padding:11px;margin-top:6px;">Masuk</button>
+          </form>
+          <div style="margin-top:auto;text-align:center;font-size:11.5px;color:var(--slate-600);padding-top:20px;">
+            Belum punya akun? <a href="#auth-register" style="font-weight:700;">Daftar di sini</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
 <!-- ============ SECTION 3: PORTAL PUBLIK / WEB ============ -->
 <section id="grup-publik">
   <div class="section-header">
@@ -639,8 +906,8 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2.5"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
                 <input type="text" placeholder="Cari minyak, beras, kardus, karung..." style="border:none;outline:none;font-size:12px;width:100%;font-family:inherit;">
               </div>
-              <a href="#grup-customer" class="btn btn-outline btn-sm">Masuk Akun</a>
-              <a href="#grup-customer" class="btn btn-amber btn-sm">Daftar Pembeli</a>
+              <a href="#grup-auth" class="btn btn-outline btn-sm">Masuk Akun</a>
+              <a href="#auth-register" class="btn btn-amber btn-sm">Daftar Pembeli</a>
             </div>
           </div>
 
@@ -883,7 +1150,7 @@
 
             <div style="margin-top:16px;">
               <button class="btn btn-amber btn-block" style="padding:12px;font-size:14px;">
-                &#128722; Tambah 15 Kardus ke Keranjang
+                Tambah 15 Kardus ke Keranjang
               </button>
             </div>
           </div>
@@ -994,7 +1261,7 @@
           <!-- Grup Toko 1 -->
           <div style="background:#fff;border:1px solid #cbd5e1;border-radius:6px;margin-bottom:14px;overflow:hidden;">
             <div style="background:var(--slate-100);padding:8px 14px;border-bottom:1px solid #cbd5e1;display:flex;justify-content:space-between;align-items:center;">
-              <span style="font-size:12px;font-weight:800;color:var(--slate-800);">&#127978; Toko 1: Grosir Makmur Jaya (Surabaya)</span>
+              <span style="font-size:12px;font-weight:800;color:var(--slate-800);">Toko 1: Grosir Makmur Jaya (Surabaya)</span>
               <span class="badge badge-amber">Tarif Ongkir: Rp1.500 / kg</span>
             </div>
             <!-- Item 1 -->
@@ -1029,7 +1296,7 @@
           <!-- Grup Toko 2 -->
           <div style="background:#fff;border:1px solid #cbd5e1;border-radius:6px;margin-bottom:16px;overflow:hidden;">
             <div style="background:var(--slate-100);padding:8px 14px;border-bottom:1px solid #cbd5e1;display:flex;justify-content:space-between;align-items:center;">
-              <span style="font-size:12px;font-weight:800;color:var(--slate-800);">&#127978; Toko 2: Sumber Rejeki Sembako (Sidoarjo)</span>
+              <span style="font-size:12px;font-weight:800;color:var(--slate-800);">Toko 2: Sumber Rejeki Sembako (Sidoarjo)</span>
               <span class="badge badge-amber">Tarif Ongkir: Rp2.000 / kg</span>
             </div>
             <div style="padding:12px 14px;display:flex;justify-content:space-between;align-items:center;">
@@ -1281,7 +1548,7 @@
             </div>
             <!-- Web Push Banner -->
             <button class="btn btn-outline btn-sm" style="display:flex;align-items:center;gap:6px;">
-              <span>&#128276;</span> Aktifkan Web Push Notifikasi
+              Aktifkan Web Push Notifikasi
             </button>
           </div>
 
@@ -1289,7 +1556,7 @@
           <div style="background:#fff;border:1px solid #cbd5e1;border-radius:6px;padding:14px;margin-bottom:12px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
               <span style="font-weight:700;font-size:13px;">Sub-Order: Grosir Makmur Jaya (Surabaya)</span>
-              <span class="badge badge-sky">&#128666; SHIPPED (DALAM PENGIRIMAN)</span>
+              <span class="badge badge-sky">SHIPPED (DALAM PENGIRIMAN)</span>
             </div>
             <div style="background:#f0f9ff;border:1px solid #bae6fd;padding:8px 12px;border-radius:4px;margin-bottom:8px;font-size:11.5px;color:#0369a1;">
               <strong>Ekspedisi Kargo:</strong> Baraka Sarana Kargo &middot; <strong>No Resi:</strong> <code>BSK-SBY-992140</code><br>
@@ -1308,7 +1575,7 @@
           <div style="background:#fff;border:1px solid #cbd5e1;border-radius:6px;padding:14px;margin-bottom:12px;">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
               <span style="font-weight:700;font-size:13px;">Sub-Order: Sumber Rejeki Sembako (Sidoarjo)</span>
-              <span class="badge badge-amber">&#128230; PROCESSING (PACKING GUDANG)</span>
+              <span class="badge badge-amber">PROCESSING (PACKING GUDANG)</span>
             </div>
             <div style="font-size:11.5px;color:#64748b;line-height:1.5;">
               Pesanan sedang dipersiapkan dan diikat pallet di gudang Sidoarjo. Menunggu penjemputan armada truk kargo.
@@ -1529,7 +1796,7 @@
 
               <div style="display:flex;justify-content:space-between;align-items:center;background:#fafafa;padding:10px 14px;border-radius:4px;font-size:12px;">
                 <span>Total Muatan Truk: <strong>370 kg</strong></span>
-                <button class="btn btn-outline btn-sm">&#128438; Cetak Packing Slip &amp; Label Truk</button>
+                <button class="btn btn-outline btn-sm">Cetak Packing Slip &amp; Label Truk</button>
               </div>
             </div>
           </div>
@@ -1559,7 +1826,7 @@
               </div>
 
               <button class="btn btn-amber btn-block" style="padding:12px;font-size:13px;">
-                &#128666; Konfirmasi Pengiriman (Kirim Resi)
+                Konfirmasi Pengiriman (Kirim Resi)
               </button>
               <div style="font-size:10px;color:#64748b;margin-top:8px;line-height:1.4;">
                 Mengubah status sub-order ke <code>SHIPPED</code>, mengirim notifikasi WhatsApp otomatis ke pembeli dan memicu countdown hold release saldo.
@@ -1713,7 +1980,7 @@
           <div>
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
               <h3 style="margin:0;font-size:17px;font-weight:800;color:var(--slate-900);">Neraca Saldo 5 Akun Ledger</h3>
-              <span class="badge badge-emerald">&#10004; Invariant: Seimbang (&Sigma;D = &Sigma;K)</span>
+              <span class="badge badge-emerald">Invariant: Seimbang (&Sigma;D = &Sigma;K)</span>
             </div>
 
             <!-- Ledger Balances Table -->
@@ -1764,9 +2031,9 @@
 
             <!-- Export Buttons -->
             <div style="display:flex;gap:8px;">
-              <button class="btn btn-slate btn-sm">&#128196; Ekspor XLSX (ZipArchive)</button>
-              <button class="btn btn-outline btn-sm">&#128196; Ekspor CSV</button>
-              <button class="btn btn-outline btn-sm">&#128196; Ekspor PDF (dompdf)</button>
+              <button class="btn btn-slate btn-sm">Ekspor XLSX (ZipArchive)</button>
+              <button class="btn btn-outline btn-sm">Ekspor CSV</button>
+              <button class="btn btn-outline btn-sm">Ekspor PDF (dompdf)</button>
             </div>
           </div>
 
@@ -1796,10 +2063,10 @@
               <!-- Decision Buttons -->
               <div style="display:flex;gap:8px;">
                 <button class="btn btn-amber btn-sm" style="flex:1;">
-                  &#10004; Setujui (Midtrans Refund API)
+                  Setujui (Midtrans Refund API)
                 </button>
                 <button class="btn btn-outline btn-sm" style="flex:1;color:var(--rose-600);border-color:var(--rose-600);">
-                  &#10008; Tolak (Kembali Shipped)
+                  Tolak (Kembali Shipped)
                 </button>
               </div>
             </div>

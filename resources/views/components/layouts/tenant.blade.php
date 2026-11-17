@@ -43,9 +43,12 @@
                 <div class="flex items-baseline gap-2">
                     <span class="text-sm font-bold text-slate-800 dark:text-slate-100">{{ $title }}</span>
                 </div>
-                @isset($headerRight)
-                    <div class="ms-auto flex items-center gap-3">{{ $headerRight }}</div>
-                @endisset
+                <div class="ms-auto flex items-center gap-3">
+                    @isset($headerRight)
+                        {{ $headerRight }}
+                    @endisset
+                    <x-account-menu variant="light" />
+                </div>
             </header>
 
             <main class="flex-1 p-6">

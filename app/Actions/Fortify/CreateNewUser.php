@@ -15,19 +15,36 @@ class CreateNewUser implements CreatesNewUsers
     /**
      * Validate and create a newly registered user.
      *
-     * @param  array<string, string>  $input
+     * @param  array<string, mixed>  $input
      */
     public function create(array $input): User
     {
-        Validator::make($input, [
+        $normalizedPhone = preg_replace('/[\s\-\.]+/', '', (string) ($input['phone'] ?? '')) ?? '';
+
+        $normalized = [
+            ...$input,
+            'phone' => $normalizedPhone,
+        ];
+
+        Validator::make($normalized, [
             ...$this->profileRules(),
+            'phone' => $this->phoneRules(),
             'password' => $this->passwordRules(),
+            'terms' => ['accepted'],
+        ], [
+            'phone.required' => 'Nomor WhatsApp wajib diisi.',
+            'phone.regex' => 'Format nomor WhatsApp tidak valid. Gunakan awalan 08 atau 628 (contoh: 081234567890).',
+            'phone.unique' => 'Nomor WhatsApp sudah terdaftar pada akun lain.',
+            'terms.accepted' => 'Anda harus menyetujui syarat dan ketentuan platform.',
         ])->validate();
 
         return User::create([
-            'name' => $input['name'],
-            'email' => $input['email'],
-            'password' => $input['password'],
+            'name' => (string) $normalized['name'],
+            'email' => (string) $normalized['email'],
+            'phone' => $normalizedPhone,
+            'role' => null,
+            'status' => 'active',
+            'password' => (string) $normalized['password'],
         ]);
     }
 }

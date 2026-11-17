@@ -34,7 +34,7 @@
         </flux:sidebar>
 
         <!-- Mobile User Menu -->
-        <flux:header class="lg:hidden">
+        <flux:header class="lg:hidden" x-data="{ confirmLogout: false }" @keydown.escape.window="confirmLogout = false">
             <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
 
             <flux:spacer />
@@ -66,26 +66,26 @@
 
                     <flux:menu.radio.group>
                         <flux:menu.item :href="route('profile.edit')" icon="cog" wire:navigate>
-                            {{ __('Settings') }}
+                            Profil &amp; Pengaturan
                         </flux:menu.item>
                     </flux:menu.radio.group>
 
                     <flux:menu.separator />
 
-                    <form method="POST" action="{{ route('logout') }}" class="w-full">
-                        @csrf
-                        <flux:menu.item
-                            as="button"
-                            type="submit"
-                            icon="arrow-right-start-on-rectangle"
-                            class="w-full cursor-pointer"
-                            data-test="logout-button"
-                        >
-                            {{ __('Log out') }}
-                        </flux:menu.item>
-                    </form>
+                    <flux:menu.item
+                        as="button"
+                        type="button"
+                        icon="arrow-right-start-on-rectangle"
+                        class="w-full cursor-pointer text-rose-600 dark:text-rose-400"
+                        @click="confirmLogout = true"
+                        data-test="open-logout-modal-button"
+                    >
+                        Keluar
+                    </flux:menu.item>
                 </flux:menu>
             </flux:dropdown>
+
+            <x-logout-confirmation-modal title-id="mobile-sidebar-logout-modal-title" />
         </flux:header>
 
         {{ $slot }}

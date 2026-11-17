@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\ValidationException;
+use Laravel\Fortify\Contracts\LogoutResponse;
 use Laravel\Fortify\Fortify;
 
 class FortifyServiceProvider extends ServiceProvider
@@ -21,7 +22,15 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton(LogoutResponse::class, fn (): LogoutResponse => new class implements LogoutResponse
+        {
+            public function toResponse($request)
+            {
+                return redirect()
+                    ->route('login')
+                    ->with('status', 'Anda berhasil keluar dari akun.');
+            }
+        });
     }
 
     /**
