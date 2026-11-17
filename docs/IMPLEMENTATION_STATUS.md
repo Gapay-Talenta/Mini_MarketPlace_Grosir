@@ -14,10 +14,10 @@ Dokumen pelacak progres mingguan kumulatif pengembangan aplikasi **Mini MarketPl
 
 | Komponen                        | Status Saat Ini                                                                                         |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| **Fase**                        | Fase 1 — Keamanan Data & Isolasi Multi-Tenant                                                           |
-| **Pertemuan Terakhir Selesai**  | **Pertemuan 04** (Isolasi Multi-Tenant Berlapis: Context, Scope, Policy, Scoped Binding & Controlled Bypass) |
-| **Tag Git Terakhir**            | `pertemuan-04`                                                                                          |
-| **Quality Gate**                | **PASS** (65 test passing, Pint clean, PHPStan clean, Vite clean)                                       |
+| **Fase**                        | Fase 2 — Back-office Inti                                                                               |
+| **Pertemuan Terakhir Selesai**  | **Pertemuan 05** (Administrasi Hub, Toko Grosir, Role, Komisi Effective-Dated, Rekening & UC-19/UC-21)  |
+| **Tag Git Terakhir**            | `pertemuan-05`                                                                                          |
+| **Quality Gate**                | **PASS** (92 test passing, Pint clean, PHPStan clean, Vite clean)                                       |
 | **Database Dev / Test**         | `project_sem3` / `project_sem3_test` (MariaDB 11.4+)                                                    |
 | **Cache, Queue, Session, Cart** | Redis 7.x (`127.0.0.1:6379`)                                                                            |
 | **Broadcasting / Realtime**     | Laravel Reverb (`0.0.0.0:8080`)                                                                         |
@@ -32,7 +32,7 @@ Dokumen pelacak progres mingguan kumulatif pengembangan aplikasi **Mini MarketPl
 | **02** | **Modular monolith, auth 3 konteks, layout**                | Struktur 6 modul, route group `PortalRoutes`, registrasi + login customer (name, email, password, phone), layout customer/tenant/admin | Route list valid, auth gate test, layout render test (47 passed)      | ✅ **SELESAI**  |
 | **03** | **Migrasi baseline + tabel ledger**                         | Tabel inti (26 tabel) + 5 akun COA + `ledger_entries` + `balance_projections` + model & seeder                                         | `migrate:fresh --seed` sukses, FK komposit MariaDB (55 passed)        | ✅ **SELESAI**  |
 | **04** | **Isolasi multi-tenant berlapis**                           | `TenantContext`, `BelongsToTenant` scope, policy tenant, scoped binding, controlled bypass & test allow/deny                            | Matrix allow/deny tenant isolation test (65 passed)                   | ✅ **SELESAI**  |
-| **05** | Admin hub + admin toko                                      | CRUD toko, role `store_admins`, komisi effective-dated, rekening toko terenkripsi, tarif ongkir/kg, audit log                          | Commission overlap guard test, encrypted bank test                    | ⏳ _Berikutnya_ |
+| **05** | **Admin hub + admin toko**                                  | CRUD toko, role `store_admins`, komisi effective-dated, rekening toko terenkripsi, tarif ongkir/kg, audit log, UC-19 & UC-21 | Commission overlap guard, encrypted bank, lockout & onboarding (92 passed) | ✅ **SELESAI**  |
 | **06** | Katalog publik + katalog toko + tier harga                  | CRUD produk (kategori, satuan, foto, deskripsi, berat), 1 harga normal + maks 4 tier grosir, stok, katalog publik                      | Tier resolver test, withoutGlobalScopes review                        |   ⬜ Rencana    |
 | **07** | Cart multi-toko di Redis (milik user)                       | `CartService` (key terikat `user_id`), revalidasi harga & stok saat buka cart, UI cart Livewire, login gate                            | Cart isolation per user test, stock/price revalidation test           |   ⬜ Rencana    |
 | **08** | Checkout atomik multi-toko                                  | Order induk + sub-order, snapshot tier & satuan, ongkir per berat, deduksi stok atomik, idempotency key, riwayat order                 | Atomic checkout test, oversell lock test, idempotency test            |   ⬜ Rencana    |
@@ -90,7 +90,7 @@ Dokumen pelacak progres mingguan kumulatif pengembangan aplikasi **Mini MarketPl
 | 7   | Release stok saat expired / cancelled                                               |     Mg 8 & 9     |   ⬜   |
 | 8   | State machine refund (reject → kembali `shipped`, approve → reversal)               |      Mg 11       |   ⬜   |
 | 9   | Otorisasi channel realtime (user A ditolak dengar channel user B)                   |      Mg 12       |   ⬜   |
-| 10  | Guard komisi effective-dated (overlap ditolak, snapshot rate konsisten)             |       Mg 5       |   ⬜   |
+| 10  | Guard komisi effective-dated (overlap ditolak, snapshot rate konsisten)             |       Mg 5       |   ✅   |
 | 11  | Resolver tier harga grosir (qty cocok tier, snapshot harga & satuan aman)           |       Mg 6       |   ⬜   |
 | 12  | Web Push subscription lifecycle (bind `user_id`, cleanup saat order tuntas)         |      Mg 12       |   ⬜   |
 | 13  | Notifikasi WhatsApp via Fonnte (target `users.phone`, fail-safe order)              |      Mg 12       |   ⬜   |

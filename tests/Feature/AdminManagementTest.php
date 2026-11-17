@@ -10,6 +10,7 @@ use App\Models\User;
 use App\Modules\Admin\Services\ManageBankAccount;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 function createHubAdmin(): User
 {
@@ -51,6 +52,7 @@ test('hanya admin hub yang dapat mengakses halaman manajemen toko', function () 
 });
 
 test('membuat toko baru membentuk komisi aktif, tarif ongkir, dan audit log secara atomik', function () {
+    Notification::fake();
     $admin = createHubAdmin();
     $this->actingAs($admin);
 
@@ -60,6 +62,11 @@ test('membuat toko baru membentuk komisi aktif, tarif ongkir, dan audit log seca
         'description' => 'Pusat kulakan sembako',
         'commission_rate' => '12.50',
         'rate_per_kg' => '9000',
+        'pic_name' => 'Budi Owner',
+        'pic_email' => 'budi-makmur@grosir.test',
+        'bank_name' => 'BCA',
+        'account_holder_name' => 'Budi Owner',
+        'account_number' => '1234567890',
     ]);
 
     $store = Store::query()->where('slug', 'sembako-makmur')->firstOrFail();
@@ -79,13 +86,21 @@ test('slug toko harus unik dan payload kosong ditolak validasi', function () {
     createStoreSample('toko-unik');
 
     $this->post(route('admin.stores.store'), [])
-        ->assertSessionHasErrors(['name', 'slug', 'commission_rate', 'rate_per_kg']);
+        ->assertSessionHasErrors([
+            'name', 'slug', 'commission_rate', 'rate_per_kg',
+            'pic_name', 'pic_email', 'bank_name', 'account_holder_name', 'account_number',
+        ]);
 
     $this->post(route('admin.stores.store'), [
         'name' => 'Toko Duplikat',
         'slug' => 'toko-unik',
         'commission_rate' => '10',
         'rate_per_kg' => '8000',
+        'pic_name' => 'Budi',
+        'pic_email' => 'budi-dup@grosir.test',
+        'bank_name' => 'BRI',
+        'account_holder_name' => 'Budi',
+        'account_number' => '1234567890',
     ])->assertSessionHasErrors('slug');
 });
 

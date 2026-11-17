@@ -16,3 +16,7 @@
   - `tests/Feature/AdminManagementTest.php` dan `tests/Feature/CommissionScheduleBoundaryTest.php` (12 test lulus).
 - [x] **Tahap 7: Dokumentasi dan Commit**
   - Evidence pertemuan 5 tersimpan, seluruh quality gate hijau, dan commit tahap 1–7 dibuat.
+- [x] **Tahap 8: Menuntaskan UC-19 & UC-21**
+  - `App\Support\Auth\LoginLockout`, `FortifyServiceProvider::configureAuthentication()` (pesan generik + lockout 5x/10m → 15m), `DashboardRedirectController`, sesi 480 menit, dan view login berbahasa Indonesia.
+  - Onboarding toko lengkap (akun owner + tautan reset password + rekening awal terenkripsi), `ChangeStoreStatus` & `AdminStoreStatusController` (`aktif` ↔ `nonaktif`), serta riwayat aktor pengubah komisi.
+  - `LoginLockoutTest` & `StoreOnboardingTest` lulus (total 92 test suite PASS).

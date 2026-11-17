@@ -43,10 +43,13 @@
 
             <div class="mt-4">
                 <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Riwayat Versi Tarif:</h3>
-                <ul class="mt-2 divide-y divide-slate-100 text-xs dark:divide-slate-800">
+                <ul class="mt-2 divide-y divide-slate-100 text-xs dark:divide-slate-800" data-test="commission-history">
                     @foreach ($commissions as $comm)
-                        <li class="py-2 flex items-center justify-between">
-                            <span class="font-bold text-slate-800 dark:text-slate-200">{{ number_format((float) $comm->rate_percent, 2, ',', '.') }}%</span>
+                        <li class="py-2 flex flex-wrap items-center justify-between gap-2">
+                            <span class="font-bold text-slate-800 dark:text-slate-200">
+                                {{ rtrim(rtrim(number_format((float) $comm->rate_percent, 2, ',', '.'), '0'), ',') }}%
+                                <span class="font-normal text-slate-500">&middot; oleh {{ $commissionActors[$comm->id] ?? 'sistem' }}</span>
+                            </span>
                             <span class="text-slate-500">
                                 {{ $comm->valid_from->format('d M Y H:i') }} &rarr; {{ $comm->valid_to ? $comm->valid_to->format('d M Y H:i') : 'sekarang' }}
                             </span>

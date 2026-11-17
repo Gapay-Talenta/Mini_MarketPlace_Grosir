@@ -4,6 +4,7 @@ use App\Modules\Admin\Http\Controllers\AdminBankAccountController;
 use App\Modules\Admin\Http\Controllers\AdminCommissionController;
 use App\Modules\Admin\Http\Controllers\AdminStoreController;
 use App\Modules\Admin\Http\Controllers\AdminStoreRoleController;
+use App\Modules\Admin\Http\Controllers\AdminStoreStatusController;
 use App\Support\Routing\PortalRoutes;
 use Illuminate\Support\Facades\Route;
 
@@ -15,6 +16,7 @@ PortalRoutes::admin(function (): void {
     Route::get('/stores/create', [AdminStoreController::class, 'create'])->name('stores.create');
     Route::post('/stores', [AdminStoreController::class, 'store'])->name('stores.store');
     Route::get('/stores/{store}', [AdminStoreController::class, 'edit'])->name('stores.edit');
+    Route::post('/stores/{store}/status', AdminStoreStatusController::class)->name('stores.status');
 
     // Penjadwalan komisi (Tahap 4)
     Route::post('/stores/{store}/commission', [AdminCommissionController::class, 'store'])->name('stores.commission.store');
