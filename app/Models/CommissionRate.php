@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToTenant;
+use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Carbon;
@@ -42,5 +44,19 @@ class CommissionRate extends Model
     public function store(): BelongsTo
     {
         return $this->belongsTo(Store::class);
+    }
+
+    /**
+     * Scope untuk mengambil tarif komisi yang berlaku pada instan waktu tertentu.
+     * Menggunakan interval setengah-terbuka [valid_from, valid_to).
+     *
+     * @param  Builder<self>  $query
+     */
+    public function scopeEffectiveAt(Builder $query, CarbonInterface $instant): void
+    {
+        $query->where('valid_from', '<=', $instant)
+            ->where(function (Builder $query) use ($instant): void {
+                $query->whereNull('valid_to')->orWhere('valid_to', '>', $instant);
+            });
     }
 }
