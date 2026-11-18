@@ -34,13 +34,20 @@ Selalu bekerja dengan prinsip **urut per pertemuan/modul, perubahan minimal, dan
 2. **Patuhi Batas Pertemuan / Modul Saat Ini**
    * Cek `docs/IMPLEMENTATION_STATUS.md` sebelum mulai. Kerjakan **hanya** deliverable pertemuan yang sedang aktif (misalnya saat mengerjakan Pertemuan 06 Katalog, jangan ikut membangun Cart Redis Pertemuan 07, Checkout Pertemuan 08, atau Payment Pertemuan 09) dan pastikan seluruh quality gate pertemuan tersebut hijau sebelum melangkah ke pertemuan berikutnya.
 3. **Dilarang Menambah Fitur "Bonus" di Luar Spesifikasi Terkunci**
-   * Jangan menambahkan fitur yang eksplisit tidak ada atau ditolak di `docs/draft_rincian_project_laravel.md` (contoh: verifikasi OTP registrasi, sesi anonim/guest cart, tracking token, API REST/SPA terpisah, atau role baru di luar `admin`, `tenant`, `null`/pembeli).
+   * Jangan menambahkan fitur yang eksplisit tidak ada atau ditolak di `docs/draft_rincian_project_laravel.md` (contoh: verifikasi OTP registrasi, sesi anonim/guest cart, tracking token, API REST/SPA terpisah di branch `main`, atau role baru di luar `admin`, `tenant`, `null`/pembeli) — **kecuali** untuk pengecualian REST API pada branch tersendiri di bawah.
 4. **Dilarang Refactor Liar di Luar Scope Task**
-   * Jangan mengubah, memformat ulang, atau "merapikan" file, komentar, UI, atau test yang tidak berhubungan langsung dengan permintaan saat ini.
+   * Jangan mengubah, memformat ulang, atau "merapikan" file, komentar, UI, atau test yang tidak berhubungan langsung dengan permintaan saat ini (kecuali refactor REST API pada branch tersendiri sesuai pengecualian di bawah).
 5. **Dilarang Over-Engineering & Abstraksi Prematur**
    * Jangan membuat wrapper/interface/repository/trait/service berlapis hanya untuk dipakai satu kali. Gunakan langsung pola yang sudah dipakai di proyek (Controller / Livewire / Service / Action per modul).
 6. **Satu Permintaan = Satu Lingkup Jelas**
    * Jika teman/kolaborator memberi perintah yang melebar ("sekalian buatkan A, B, C, dan ubah arsitektur X"), pecah lingkupnya, jelaskan dampaknya ke codebase saat ini, dan **minta konfirmasi** sebelum menyentuh area di luar task utama.
+
+### Pengecualian Khusus: Refactor REST API untuk Mata Kuliah Lain (Branch Tersendiri)
+
+* **Ruang Lingkup yang Diizinkan:** Diperbolehkan melakukan refactor untuk mengubah atau menambahkan layer **autentikasi** dan **CRUD** menjadi **REST API** untuk keperluan mata kuliah lain (misalnya mata kuliah Interoperabilitas).
+* **Wajib Menggunakan Branch Tersendiri:** Pengerjaan refactor REST API **wajib dilakukan di branch tersendiri** (seperti branch `API` atau branch khusus `interoperabilitas`, **bukan** di `main`), sehingga branch `main` tetap murni mengikuti roadmap Pertemuan 01–14 di `docs/IMPLEMENTATION_STATUS.md`.
+* **Aturan Keamanan Tetap Berlaku:** Endpoint REST API tetap wajib menegakkan isolasi multi-tenant (`TenantContext`, Policy, otorisasi role/token) serta tidak menghapus/melonggarkan test yang sudah ada.
+* **Pengingat Wajib Setiap Selesai 1 Sesi Pengerjaan:** Setiap selesai **1 sesi pengerjaan**, AI **wajib mengingatkan pengguna** untuk melakukan merge antara `main` dan branch `API`/interoperabilitas (terutama `main` → branch `API`/interoperabilitas agar perubahan terbaru dari `main` ikut tersinkron dan tidak menumpuk konflik).
 
 ---
 
